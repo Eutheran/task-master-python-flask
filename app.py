@@ -1,26 +1,43 @@
 from datetime import datetime
-from flask import Flask, render_template
+from flask import Flask, render_template, request, redirect
 from flask_sqlalchemy import SQLAlchemy
 
 
-APP = Flask(__name__)
-APP.config['SQLALCHEMY_DATABASE_URL'] = 'sqlite:///test.db'
-DB = SQLAlchemy(APP)
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
+db = SQLAlchemy(app)
+
+# create our db
 
 
-class Todo(DB.Model):
-    id = DB.Column(DB.Integer, primary_key=True)
-    content = DB.Column(DB.String(300), nullable=False)
-    date_created = DB.Column(DB.DateTime, default=datetime.utcnow)
+class Todo(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.String(200), nullable=False)
+    date_created = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
+        # returns when something commited to db
         return '<Task %r>' % self.id
 
 
-@APP.route('/')
+@app.route('/', methods=['POST', 'GET'])
 def index():
-    return render_template('index.html')
+    if request.method == 'POST':
+        task_content = request.form['content']
+        new_task = Todo(content=task_content)
+
+        try:
+            db.session.add(new_task)
+            db.session.commit()
+            return redirect('/')
+        except:
+            return 'There was an issue adding your task!'
+
+    else:
+        # return all tasks, newest first
+        tasks = Todo.query.order_by(Todo.date_created).all()
+        return render_template('index.html', tasks)
 
 
 if __name__ == "__main__":
-    APP.run(debug=True)
+    app.run(debug=True)
