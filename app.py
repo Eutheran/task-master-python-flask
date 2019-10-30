@@ -1,13 +1,10 @@
-from datetime import datetime
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, url_for, request, redirect
 from flask_sqlalchemy import SQLAlchemy
-
+from datetime import datetime
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
 db = SQLAlchemy(app)
-
-# create our db
 
 
 class Todo(db.Model):
@@ -16,7 +13,6 @@ class Todo(db.Model):
     date_created = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
-        # returns when something commited to db
         return '<Task %r>' % self.id
 
 
@@ -31,12 +27,11 @@ def index():
             db.session.commit()
             return redirect('/')
         except:
-            return 'There was an issue adding your task!'
+            return 'There was an issue adding your task'
 
     else:
-        # return all tasks, newest first
         tasks = Todo.query.order_by(Todo.date_created).all()
-        return render_template('index.html', tasks)
+        return render_template('index.html', tasks=tasks)
 
 
 @app.route('/delete/<int:id>')
@@ -48,12 +43,13 @@ def delete(id):
         db.session.commit()
         return redirect('/')
     except:
-        return 'Error: There was a problem deleting that task'
+        return 'Error: There was a problem deleting your task'
 
 
 @app.route('/update/<int:id>', methods=['GET', 'POST'])
 def update(id):
     task = Todo.query.get_or_404(id)
+
     if request.method == 'POST':
         task.content = request.form['content']
 
@@ -61,7 +57,8 @@ def update(id):
             db.session.commit()
             return redirect('/')
         except:
-            return 'Error: Task failed to update'
+            return 'Error: There was a problem updating your task'
+
     else:
         return render_template('update.html', task=task)
 
