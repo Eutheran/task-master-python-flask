@@ -1,14 +1,26 @@
-from flask import Flask, render_template, url_for
+from datetime import datetime
+from flask import Flask, render_template
 from flask_sqlalchemy import SQLAlchemy
 
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URL'] = 'sqlite:///test.db'
+
+APP = Flask(__name__)
+APP.config['SQLALCHEMY_DATABASE_URL'] = 'sqlite:///test.db'
+DB = SQLAlchemy(APP)
 
 
-@app.route('/')
+class Todo(DB.Model):
+    id = DB.Column(DB.Integer, primary_key=True)
+    content = DB.Column(DB.String(300), nullable=False)
+    date_created = DB.Column(DB.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return '<Task %r>' % self.id
+
+
+@APP.route('/')
 def index():
     return render_template('index.html')
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    APP.run(debug=True)
